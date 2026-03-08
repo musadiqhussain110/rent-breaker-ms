@@ -1,0 +1,1 @@
+{\n  "name": "rent-breaker-ms",\n  "private": true,\n  "workspaces": [\n    "backend/*",\n    "frontend/*"\n  ],\n  "scripts": {\n    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run dev --prefix backend\""\n  }\n}
