@@ -17,6 +17,7 @@ dotenv.config();
 const app = express();
 app.use(cors({
   origin: [
+    'https://rent-breaker-ms.vercel.app',
     'https://rent-breaker-pqai8j8df-musadiqhussain110s-projects.vercel.app',
     // ...add any custom domain(s) here when ready
   ],
