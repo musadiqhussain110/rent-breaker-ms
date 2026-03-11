@@ -15,7 +15,13 @@ const cors = require('cors');
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://rent-breaker-pqai8j8df-musadiqhussain110s-projects.vercel.app',
+    // ...add any custom domain(s) here when ready
+  ],
+  credentials: true // if using cookies/auth
+}));
 app.use(express.json());
 
 // MongoDB Connection
