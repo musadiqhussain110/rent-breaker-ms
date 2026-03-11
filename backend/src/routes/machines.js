@@ -1,27 +1,44 @@
 const router = require("express").Router();
 const Machine = require("../models/Machine");
 const auth = require("../middleware/auth");
+const requireRole = require("../middleware/requireRole");
+
+// Allowed roles
+const anyUser = [auth, requireRole("admin", "staff", "operator", "customer")];
+const staffOrAdmin = [auth, requireRole("admin", "staff")];
+const adminOnly = [auth, requireRole("admin")];
 
 // GET /api/machines/health (protected)
-router.get("/health", auth, (req, res) => {
+router.get("/health", ...anyUser, (req, res) => {
   res.json({ ok: true, service: "machines", user: req.user });
 });
 
 // POST /api/machines (protected) - create
-router.post("/", auth, async (req, res) => {
+router.post("/", ...staffOrAdmin, async (req, res) => {
   try {
-    const { name, type, serialNumber, dailyRate, status, notes } = req.body || {};
+    const { name, type, capacity, location, serialNumber, dailyRate, status, nextMaintenanceDate, notes } = req.body || {};
 
     if (!name || !type || dailyRate === undefined) {
       return res.status(400).json({ message: "name, type, and dailyRate are required" });
     }
 
+    let nextMaint = undefined;
+    if (nextMaintenanceDate) {
+      nextMaint = new Date(nextMaintenanceDate);
+      if (Number.isNaN(nextMaint.getTime())) {
+        return res.status(400).json({ message: "nextMaintenanceDate must be a valid date" });
+      }
+    }
+
     const machine = await Machine.create({
       name,
       type,
+      capacity,
+      location,
       serialNumber,
       dailyRate,
       status,
+      nextMaintenanceDate: nextMaint,
       notes
     });
 
@@ -33,7 +50,7 @@ router.post("/", auth, async (req, res) => {
 });
 
 // GET /api/machines (protected) - list
-router.get("/", auth, async (req, res) => {
+router.get("/", ...anyUser, async (req, res) => {
   const { status, type, q } = req.query;
 
   const filter = {};
@@ -53,14 +70,14 @@ router.get("/", auth, async (req, res) => {
 });
 
 // GET /api/machines/:id (protected) - get one
-router.get("/:id", auth, async (req, res) => {
+router.get("/:id", ...anyUser, async (req, res) => {
   const machine = await Machine.findById(req.params.id);
   if (!machine) return res.status(404).json({ message: "Machine not found" });
   res.json(machine);
 });
 
 // PUT /api/machines/:id (protected) - update
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", ...staffOrAdmin, async (req, res) => {
   try {
     const updated = await Machine.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -75,7 +92,7 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // DELETE /api/machines/:id (protected) - delete
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", ...adminOnly, async (req, res) => {
   const deleted = await Machine.findByIdAndDelete(req.params.id);
   if (!deleted) return res.status(404).json({ message: "Machine not found" });
   res.json({ ok: true });

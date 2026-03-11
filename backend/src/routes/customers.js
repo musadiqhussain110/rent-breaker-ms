@@ -1,16 +1,20 @@
 const router = require("express").Router();
 const Customer = require("../models/Customer");
 const auth = require("../middleware/auth");
+const requireRole = require("../middleware/requireRole");
+
+// All customers endpoints: only admin/staff
+const staffOnly = [auth, requireRole("admin", "staff")];
 
 // GET /api/customers/health (protected)
-router.get("/health", auth, (req, res) => {
+router.get("/health", ...staffOnly, (req, res) => {
   res.json({ ok: true, service: "customers", user: req.user });
 });
 
 // POST /api/customers (protected) - create
-router.post("/", auth, async (req, res) => {
+router.post("/", ...staffOnly, async (req, res) => {
   try {
-    const { name, phone, email, address, idNumber, notes } = req.body || {};
+    const { name, phone, email, address, idNumber, notes, customerUser } = req.body || {};
     if (!name) return res.status(400).json({ message: "name is required" });
 
     const customer = await Customer.create({
@@ -19,7 +23,8 @@ router.post("/", auth, async (req, res) => {
       email,
       address,
       idNumber,
-      notes
+      notes,
+      customerUser: customerUser || undefined
     });
 
     return res.status(201).json(customer);
@@ -29,7 +34,7 @@ router.post("/", auth, async (req, res) => {
 });
 
 // GET /api/customers (protected) - list + search
-router.get("/", auth, async (req, res) => {
+router.get("/", ...staffOnly, async (req, res) => {
   const { q } = req.query;
 
   const filter = {};
@@ -47,14 +52,14 @@ router.get("/", auth, async (req, res) => {
 });
 
 // GET /api/customers/:id (protected) - get one
-router.get("/:id", auth, async (req, res) => {
+router.get("/:id", ...staffOnly, async (req, res) => {
   const customer = await Customer.findById(req.params.id);
   if (!customer) return res.status(404).json({ message: "Customer not found" });
   res.json(customer);
 });
 
 // PUT /api/customers/:id (protected) - update
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", ...staffOnly, async (req, res) => {
   try {
     const updated = await Customer.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -69,7 +74,7 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // DELETE /api/customers/:id (protected) - delete
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", ...staffOnly, async (req, res) => {
   const deleted = await Customer.findByIdAndDelete(req.params.id);
   if (!deleted) return res.status(404).json({ message: "Customer not found" });
   res.json({ ok: true });

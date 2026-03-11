@@ -1,15 +1,18 @@
 const router = require("express").Router();
 const auth = require("../middleware/auth");
+const requireRole = require("../middleware/requireRole");
 const Maintenance = require("../models/Maintenance");
 const Machine = require("../models/Machine");
 
+const maintUsers = [auth, requireRole("admin", "staff", "operator")];
+
 // GET /api/maintenance/health
-router.get("/health", auth, (req, res) => {
+router.get("/health", ...maintUsers, (req, res) => {
   res.json({ ok: true, service: "maintenance", user: req.user });
 });
 
 // GET /api/maintenance - list
-router.get("/", auth, async (req, res) => {
+router.get("/", ...maintUsers, async (req, res) => {
   const { status, machineId } = req.query;
 
   const filter = {};
@@ -24,7 +27,7 @@ router.get("/", auth, async (req, res) => {
 });
 
 // POST /api/maintenance - open maintenance (sets machine to maintenance)
-router.post("/", auth, async (req, res) => {
+router.post("/", ...maintUsers, async (req, res) => {
   try {
     const { machineId, title, description, cost, startDate } = req.body || {};
     if (!machineId || !title) {
@@ -61,7 +64,7 @@ router.post("/", auth, async (req, res) => {
 });
 
 // POST /api/maintenance/:id/complete - mark done (sets machine to available)
-router.post("/:id/complete", auth, async (req, res) => {
+router.post("/:id/complete", ...maintUsers, async (req, res) => {
   try {
     const maintenance = await Maintenance.findById(req.params.id);
     if (!maintenance) return res.status(404).json({ message: "Maintenance not found" });

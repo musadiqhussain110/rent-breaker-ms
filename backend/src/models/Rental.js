@@ -1,5 +1,16 @@
 const mongoose = require("mongoose");
 
+const paymentSchema = new mongoose.Schema(
+  {
+    amount: { type: Number, required: true, min: 0 },
+    method: { type: String, trim: true }, // e.g., cash, card, bank
+    note: { type: String, trim: true },
+    paidAt: { type: Date, default: Date.now },
+    recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }
+  },
+  { _id: false }
+);
+
 const rentalSchema = new mongoose.Schema(
   {
     customer: { type: mongoose.Schema.Types.ObjectId, ref: "Customer", required: true },
@@ -13,7 +24,11 @@ const rentalSchema = new mongoose.Schema(
 
     status: { type: String, enum: ["open", "closed"], default: "open" },
 
-    totalAmount: { type: Number, min: 0 }, // filled on return
+    // Billing
+    totalAmount: { type: Number, min: 0 }, // computed on return/close
+    advancePaid: { type: Number, min: 0, default: 0 }, // entered at create time
+    payments: { type: [paymentSchema], default: [] }, // additional payments
+
     notes: { type: String, trim: true }
   },
   { timestamps: true }
