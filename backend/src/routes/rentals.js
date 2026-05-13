@@ -8,7 +8,9 @@ const CustomerBehaviorEvent = require("../models/CustomerBehaviorEvent");
 const { logAuditEvent } = require("../services/auditLogger");
 
 const PDFDocument = require("pdfkit");
+// We approximate 1 rental day as one standard 8-hour utilization block for fleet planning metrics.
 const ASSUMED_HOURS_PER_DAY = 8;
+// Closed rentals gradually increase utilization confidence until it reaches 1.0.
 const UTILIZATION_INCREMENT = 0.02;
 
 // NOTE:

@@ -11,10 +11,12 @@ from sklearn.preprocessing import StandardScaler
 
 
 app = FastAPI(title="rent-breaker-ai-service", version="1.0.0")
+# Recommendation blend (content similarity + collaborative popularity + behavior signal).
 CONTENT_WEIGHT = 0.65
 COLLABORATIVE_WEIGHT = 0.25
 BEHAVIOR_WEIGHT = 0.10
 
+# Maintenance risk proxy weights tuned for bootstrap behavior before historical model training.
 MIN_DAYS = 3.0
 BASE_DAYS = 60.0
 USAGE_FACTOR = 0.01
@@ -213,6 +215,7 @@ def predictive_maintenance(payload: PredictiveMaintenanceRequest) -> Dict[str, A
         targets.append(target)
         rows.append((machine_id, machine))
 
+    # Bootstrap mode: train using current snapshot each call until offline training pipeline is introduced.
     model = RandomForestRegressor(n_estimators=80, random_state=42)
     X = np.array(features, dtype=float)
     y = np.array(targets, dtype=float)
@@ -260,6 +263,7 @@ def demand_forecast(payload: DemandForecastRequest) -> Dict[str, Any]:
         X.append([idx, dt.month, dt.year])
         y.append(monthly_counts[month])
 
+    # Bootstrap mode: train from request data until scheduled model training is added.
     model = RandomForestRegressor(n_estimators=120, random_state=42)
     model.fit(np.array(X, dtype=float), np.array(y, dtype=float))
 

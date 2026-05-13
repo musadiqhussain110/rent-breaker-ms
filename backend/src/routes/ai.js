@@ -1,7 +1,7 @@
 const router = require("express").Router();
+const rateLimit = require("express-rate-limit");
 const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
-const createRateLimit = require("../middleware/rateLimit");
 
 const Machine = require("../models/Machine");
 const Rental = require("../models/Rental");
@@ -10,8 +10,18 @@ const Customer = require("../models/Customer");
 const CustomerBehaviorEvent = require("../models/CustomerBehaviorEvent");
 
 const { getMachineRecommendations } = require("../services/aiClient");
-const aiReadLimiter = createRateLimit({ windowMs: 60_000, max: 120 });
-const aiWriteLimiter = createRateLimit({ windowMs: 60_000, max: 40 });
+const aiReadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 120,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+const aiWriteLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 40,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 router.get("/health", aiReadLimiter, auth, requireRole("admin", "staff", "customer"), async (req, res) => {
   res.json({ ok: true, service: "ai", aiServiceUrl: process.env.AI_SERVICE_URL || "http://localhost:8000" });
