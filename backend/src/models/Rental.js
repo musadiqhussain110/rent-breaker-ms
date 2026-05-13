@@ -18,6 +18,7 @@ const rentalSchema = new mongoose.Schema(
 
     startDate: { type: Date, required: true },
     endDate: { type: Date },
+    pickupLocation: { type: String, trim: true },
 
     dailyRateSnapshot: { type: Number, required: true, min: 0 }, // store rate at time of renting
     days: { type: Number, min: 1 }, // optional planned days

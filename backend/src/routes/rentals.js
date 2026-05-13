@@ -4,8 +4,14 @@ const requireRole = require("../middleware/requireRole");
 const Rental = require("../models/Rental");
 const Machine = require("../models/Machine");
 const Customer = require("../models/Customer");
+const CustomerBehaviorEvent = require("../models/CustomerBehaviorEvent");
+const { logAuditEvent } = require("../services/auditLogger");
 
 const PDFDocument = require("pdfkit");
+// We approximate 1 rental day as one standard 8-hour utilization block for fleet planning metrics.
+const ASSUMED_HOURS_PER_DAY = 8;
+// Closed rentals gradually increase utilization confidence until it reaches 1.0.
+const UTILIZATION_INCREMENT = 0.02;
 
 // NOTE:
 // - rentalsReadWrite is for admin/staff/operator only
@@ -111,6 +117,7 @@ router.post("/", ...rentalsCreate, async (req, res) => {
       machine: machine._id,
       startDate: new Date(startDate),
       days: days ? Number(days) : undefined,
+      pickupLocation: machine.location,
       dailyRateSnapshot: machine.dailyRate,
       notes,
       advancePaid: adv
@@ -118,6 +125,26 @@ router.post("/", ...rentalsCreate, async (req, res) => {
 
     machine.status = "rented";
     await machine.save();
+
+    await Promise.all([
+      logAuditEvent({
+        actorUser: req.user.sub,
+        actorRole: req.user.role,
+        eventType: "rental_created",
+        entityType: "Rental",
+        entityId: rental._id,
+        metadata: { machineId: machine._id, customerId: customer._id }
+      }),
+      customer.customerUser
+        ? CustomerBehaviorEvent.create({
+            customerUser: customer.customerUser,
+            eventType: "rent_machine",
+            machine: machine._id,
+            location: machine.location,
+            payload: { rentalId: rental._id, dailyRate: machine.dailyRate }
+          })
+        : Promise.resolve()
+    ]);
 
     const populated = await Rental.findById(rental._id)
       .populate("customer", "name phone email")
@@ -187,7 +214,19 @@ router.post("/:id/return", ...rentalsReadWrite, async (req, res) => {
     await rental.save();
 
     machine.status = "available";
+    const safeBillableDays = Number(billableDays) || 0;
+    machine.usageHours = Number(machine.usageHours || 0) + (safeBillableDays * ASSUMED_HOURS_PER_DAY);
+    machine.utilizationScore = Math.min(1, Number(machine.utilizationScore || 0) + UTILIZATION_INCREMENT);
     await machine.save();
+
+    await logAuditEvent({
+      actorUser: req.user.sub,
+      actorRole: req.user.role,
+      eventType: "rental_closed",
+      entityType: "Rental",
+      entityId: rental._id,
+      metadata: { machineId: machine._id, billableDays, totalAmount: rental.totalAmount }
+    });
 
     const populated = await Rental.findById(rental._id)
       .populate("customer", "name phone email")

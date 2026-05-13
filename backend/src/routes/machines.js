@@ -2,6 +2,7 @@ const router = require("express").Router();
 const Machine = require("../models/Machine");
 const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
+const { logAuditEvent } = require("../services/auditLogger");
 
 // Allowed roles
 const anyUser = [auth, requireRole("admin", "staff", "operator", "customer")];
@@ -42,6 +43,15 @@ router.post("/", ...staffOrAdmin, async (req, res) => {
       notes
     });
 
+    await logAuditEvent({
+      actorUser: req.user.sub,
+      actorRole: req.user.role,
+      eventType: "machine_created",
+      entityType: "Machine",
+      entityId: machine._id,
+      metadata: { status: machine.status, location: machine.location }
+    });
+
     return res.status(201).json(machine);
   } catch (err) {
     // duplicate serialNumber, etc.
@@ -79,12 +89,26 @@ router.get("/:id", ...anyUser, async (req, res) => {
 // PUT /api/machines/:id (protected) - update
 router.put("/:id", ...staffOrAdmin, async (req, res) => {
   try {
+    const previous = await Machine.findById(req.params.id).lean();
     const updated = await Machine.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true
     });
 
     if (!updated) return res.status(404).json({ message: "Machine not found" });
+
+    const statusChanged = previous && previous.status !== updated.status;
+    await logAuditEvent({
+      actorUser: req.user.sub,
+      actorRole: req.user.role,
+      eventType: statusChanged ? "machine_status_changed" : "machine_updated",
+      entityType: "Machine",
+      entityId: updated._id,
+      metadata: statusChanged
+        ? { from: previous.status, to: updated.status }
+        : { location: updated.location, dailyRate: updated.dailyRate }
+    });
+
     res.json(updated);
   } catch (err) {
     return res.status(400).json({ message: err.message });
@@ -95,6 +119,14 @@ router.put("/:id", ...staffOrAdmin, async (req, res) => {
 router.delete("/:id", ...adminOnly, async (req, res) => {
   const deleted = await Machine.findByIdAndDelete(req.params.id);
   if (!deleted) return res.status(404).json({ message: "Machine not found" });
+  await logAuditEvent({
+    actorUser: req.user.sub,
+    actorRole: req.user.role,
+    eventType: "machine_deleted",
+    entityType: "Machine",
+    entityId: deleted._id,
+    metadata: { name: deleted.name, serialNumber: deleted.serialNumber }
+  });
   res.json({ ok: true });
 });
 

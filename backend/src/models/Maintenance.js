@@ -6,6 +6,9 @@ const maintenanceSchema = new mongoose.Schema(
     title: { type: String, required: true, trim: true }, // e.g., "Oil change"
     description: { type: String, trim: true },
     cost: { type: Number, min: 0, default: 0 },
+    type: { type: String, enum: ["preventive", "corrective"], default: "preventive" },
+    breakdownEvent: { type: Boolean, default: false },
+    usageHoursAtService: { type: Number, min: 0 },
 
     startDate: { type: Date, default: Date.now },
     endDate: { type: Date },

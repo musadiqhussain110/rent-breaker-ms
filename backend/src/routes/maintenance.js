@@ -3,6 +3,7 @@ const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
 const Maintenance = require("../models/Maintenance");
 const Machine = require("../models/Machine");
+const { logAuditEvent } = require("../services/auditLogger");
 
 const maintUsers = [auth, requireRole("admin", "staff", "operator")];
 
@@ -29,7 +30,7 @@ router.get("/", ...maintUsers, async (req, res) => {
 // POST /api/maintenance - open maintenance (sets machine to maintenance)
 router.post("/", ...maintUsers, async (req, res) => {
   try {
-    const { machineId, title, description, cost, startDate } = req.body || {};
+    const { machineId, title, description, cost, startDate, type, breakdownEvent, usageHoursAtService } = req.body || {};
     if (!machineId || !title) {
       return res.status(400).json({ message: "machineId and title are required" });
     }
@@ -46,11 +47,33 @@ router.post("/", ...maintUsers, async (req, res) => {
       title,
       description,
       cost: cost !== undefined ? Number(cost) : 0,
-      startDate: startDate ? new Date(startDate) : new Date()
+      startDate: startDate ? new Date(startDate) : new Date(),
+      type: type || "preventive",
+      breakdownEvent: !!breakdownEvent,
+      usageHoursAtService:
+        usageHoursAtService !== undefined ? Math.max(0, Number(usageHoursAtService) || 0) : undefined
     });
 
     machine.status = "maintenance";
+    machine.maintenanceCostTotal = Number(machine.maintenanceCostTotal || 0) + Number(maintenance.cost || 0);
+    if (maintenance.breakdownEvent) {
+      machine.breakdownCount = Number(machine.breakdownCount || 0) + 1;
+      machine.lastFailureAt = maintenance.startDate || new Date();
+    }
     await machine.save();
+
+    await logAuditEvent({
+      actorUser: req.user.sub,
+      actorRole: req.user.role,
+      eventType: "maintenance_started",
+      entityType: "Maintenance",
+      entityId: maintenance._id,
+      metadata: {
+        machineId: machine._id,
+        type: maintenance.type,
+        breakdownEvent: maintenance.breakdownEvent
+      }
+    });
 
     const populated = await Maintenance.findById(maintenance._id).populate(
       "machine",
@@ -79,6 +102,15 @@ router.post("/:id/complete", ...maintUsers, async (req, res) => {
       machine.status = "available";
       await machine.save();
     }
+
+    await logAuditEvent({
+      actorUser: req.user.sub,
+      actorRole: req.user.role,
+      eventType: "maintenance_completed",
+      entityType: "Maintenance",
+      entityId: maintenance._id,
+      metadata: { machineId: maintenance.machine, endDate: maintenance.endDate }
+    });
 
     const populated = await Maintenance.findById(maintenance._id).populate(
       "machine",
