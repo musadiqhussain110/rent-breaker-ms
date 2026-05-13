@@ -16,6 +16,6 @@ services:
       - key: JWT_SECRET
         sync: false
       - key: AI_SERVICE_URL
-        value: http://localhost:8000
+        sync: false
       - key: FRONTEND_ORIGINS
         sync: false
