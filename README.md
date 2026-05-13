@@ -94,6 +94,7 @@ If frontend is live on Vercel but backend is not responding, use these settings:
   - `JWT_SECRET` (required)
   - `AI_SERVICE_URL` (optional, default: `http://localhost:8000`)
   - `FRONTEND_ORIGINS` (comma-separated, optional)
+  - `VERCEL_PREVIEW_ORIGIN_REGEX` (optional, regex for allowed preview URLs)
 
 You can also deploy from `/render.yaml` in this repo.
 

@@ -28,6 +28,11 @@ const allowedOrigins = configuredOrigins.length
       'https://rent-breaker-pqai8j8df-musadiqhussain110s-projects.vercel.app',
       'http://localhost:5173'
     ];
+const vercelPreviewOriginRegex = new RegExp(
+  process.env.VERCEL_PREVIEW_ORIGIN_REGEX ||
+    '^https://rent-breaker-[a-z0-9-]+-musadiqhussain110s-projects\\.vercel\\.app$',
+  'i'
+);
 
 app.use(
   cors({
@@ -35,8 +40,7 @@ app.use(
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
 
-      const isVercelPreview =
-        /^https:\/\/rent-breaker-[a-z0-9-]+-musadiqhussain110s-projects\.vercel\.app$/i.test(origin);
+      const isVercelPreview = vercelPreviewOriginRegex.test(origin);
       if (isVercelPreview) return callback(null, true);
 
       return callback(new Error('Not allowed by CORS'));
