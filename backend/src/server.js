@@ -33,15 +33,19 @@ const allowedOrigins = new Set([
   ...configuredAllowedOrigins,
 ]);
 
-let vercelPreviewOriginRegex = /^https:\/\/rent-breaker-[a-z0-9-]+-musadiqhussain110s-projects\.vercel\.app$/;
+const defaultVercelPreviewOriginRegex = /^https:\/\/rent-breaker-[a-z0-9-]+-musadiqhussain110s-projects\.vercel\.app$/;
+const vercelPreviewOriginRegex = (() => {
+  if (!process.env.VERCEL_PREVIEW_ORIGIN_REGEX) {
+    return defaultVercelPreviewOriginRegex;
+  }
 
-if (process.env.VERCEL_PREVIEW_ORIGIN_REGEX) {
   try {
-    vercelPreviewOriginRegex = new RegExp(process.env.VERCEL_PREVIEW_ORIGIN_REGEX);
+    return new RegExp(process.env.VERCEL_PREVIEW_ORIGIN_REGEX);
   } catch (error) {
     console.error('Invalid VERCEL_PREVIEW_ORIGIN_REGEX:', error.message);
+    return defaultVercelPreviewOriginRegex;
   }
-}
+})();
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -49,7 +53,7 @@ app.use(cors({
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    return callback(new Error('CORS policy violation'));
   },
   credentials: true // if using cookies/auth
 }));
