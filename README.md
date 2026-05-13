@@ -44,7 +44,7 @@ Backend env (example):
 - `PORT`
 
 Frontend env (example):
-- `VITE_API_URL`
+- `VITE_API_BASE_URL`
 
 ### 3) Run
 ```bash

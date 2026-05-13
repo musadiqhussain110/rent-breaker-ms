@@ -15,12 +15,42 @@ const cors = require('cors');
 dotenv.config();
 
 const app = express();
+
+const defaultAllowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'https://rent-breaker-ms.vercel.app',
+  'https://rent-breaker-pqai8j8df-musadiqhussain110s-projects.vercel.app',
+];
+
+const configuredAllowedOrigins = (process.env.FRONTEND_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = new Set([
+  ...defaultAllowedOrigins,
+  ...configuredAllowedOrigins,
+]);
+
+let vercelPreviewOriginRegex = /^https:\/\/rent-breaker-[a-z0-9-]+-musadiqhussain110s-projects\.vercel\.app$/;
+
+if (process.env.VERCEL_PREVIEW_ORIGIN_REGEX) {
+  try {
+    vercelPreviewOriginRegex = new RegExp(process.env.VERCEL_PREVIEW_ORIGIN_REGEX);
+  } catch (error) {
+    console.error('Invalid VERCEL_PREVIEW_ORIGIN_REGEX:', error.message);
+  }
+}
+
 app.use(cors({
-  origin: [
-    'https://rent-breaker-ms.vercel.app',
-    'https://rent-breaker-pqai8j8df-musadiqhussain110s-projects.vercel.app',
-    // ...add any custom domain(s) here when ready
-  ],
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.has(origin) || vercelPreviewOriginRegex.test(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   credentials: true // if using cookies/auth
 }));
 app.use(express.json());
