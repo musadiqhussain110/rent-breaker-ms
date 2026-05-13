@@ -16,19 +16,44 @@ const cors = require('cors');
 dotenv.config();
 
 const app = express();
-app.use(cors({
-  origin: [
-    'https://rent-breaker-ms.vercel.app',
-    'https://rent-breaker-pqai8j8df-musadiqhussain110s-projects.vercel.app',
-    // ...add any custom domain(s) here when ready
-  ],
-  credentials: true // if using cookies/auth
-}));
+const configuredOrigins = (process.env.FRONTEND_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const allowedOrigins = configuredOrigins.length
+  ? configuredOrigins
+  : [
+      'https://rent-breaker-ms.vercel.app',
+      'https://rent-breaker-pqai8j8df-musadiqhussain110s-projects.vercel.app',
+      'http://localhost:5173'
+    ];
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      const isVercelPreview = /\.vercel\.app$/i.test(origin);
+      if (isVercelPreview) return callback(null, true);
+
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+  })
+);
 app.use(express.json());
 
 // MongoDB Connection
+const mongoUri = process.env.MONGODB_URI || process.env.DB_CONNECTION;
+if (!mongoUri) {
+  console.error('Missing MongoDB connection string. Set MONGODB_URI (or legacy DB_CONNECTION).');
+  process.exit(1);
+}
+
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(mongoUri)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => {
     console.error('MongoDB connection error:', err);
@@ -36,6 +61,10 @@ mongoose
   });
 
 // Routes
+app.get('/api/health', (req, res) => {
+  res.json({ ok: true, service: 'backend' });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/machines', machineRoutes);
 app.use('/api/customers', customerRoutes);

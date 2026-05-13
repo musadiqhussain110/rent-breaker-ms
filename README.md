@@ -46,7 +46,8 @@ Backend env (example):
 - `AI_SERVICE_URL` (default: `http://localhost:8000`)
 
 Frontend env (example):
-- `VITE_API_URL`
+- `VITE_API_BASE_URL` (preferred)
+- `VITE_API_URL` (legacy fallback, still supported)
 
 ### 3) Run
 ```bash
@@ -79,3 +80,27 @@ Set a strong `JWT_SECRET` in your shell, then run:
 export JWT_SECRET=your_strong_secret
 docker compose up --build
 ```
+
+## Render + Vercel Deployment Settings
+If frontend is live on Vercel but backend is not responding, use these settings:
+
+### Render (Backend)
+- Root Directory: `backend`
+- Build Command: `npm install`
+- Start Command: `npm start`
+- Health Check Path: `/api/health`
+- Environment Variables:
+  - `MONGODB_URI` (required)
+  - `JWT_SECRET` (required)
+  - `AI_SERVICE_URL` (optional, default: `http://localhost:8000`)
+  - `FRONTEND_ORIGINS` (comma-separated, optional)
+
+You can also deploy from `/render.yaml` in this repo.
+
+### Vercel (Frontend)
+- Framework: Vite
+- Root Directory: `frontend`
+- Required environment variable:
+  - `VITE_API_BASE_URL=https://<your-render-backend-domain>/api`
+
+This repo also supports legacy `VITE_API_URL`, but `VITE_API_BASE_URL` is preferred.
