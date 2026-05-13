@@ -23,6 +23,15 @@ const machineSchema = new mongoose.Schema(
     // ✅ Maintenance scheduling (will be used in Step 3 too)
     nextMaintenanceDate: { type: Date },
 
+    // AI and forecasting support
+    warehouse: { type: String, trim: true },
+    usageHours: { type: Number, min: 0, default: 0 },
+    breakdownCount: { type: Number, min: 0, default: 0 },
+    uptimePercent: { type: Number, min: 0, max: 100, default: 100 },
+    utilizationScore: { type: Number, min: 0, max: 1, default: 0 },
+    maintenanceCostTotal: { type: Number, min: 0, default: 0 },
+    lastFailureAt: { type: Date },
+
     notes: { type: String, trim: true }
   },
   { timestamps: true }

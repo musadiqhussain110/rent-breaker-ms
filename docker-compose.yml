@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: rent-breaker-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: rent-breaker-ai
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rent-breaker-backend
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+      - ai-service
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/rent_breaker
+      JWT_SECRET: change_me
+      PORT: 5050
+      AI_SERVICE_URL: http://ai-service:8000
+    ports:
+      - "5050:5050"
+
+volumes:
+  mongo_data:

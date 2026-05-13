@@ -110,6 +110,8 @@ export default function Requests({ user }) {
 
   const [machines, setMachines] = useState([]);
   const [items, setItems] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
 
   const [statusFilter, setStatusFilter] = useState("pending"); // pending/approved/rejected/cancelled/all
   const [saving, setSaving] = useState(false);
@@ -131,6 +133,12 @@ export default function Requests({ user }) {
     [machines]
   );
 
+  const machineById = useMemo(() => {
+    const map = {};
+    for (const m of machines) map[m._id] = m;
+    return map;
+  }, [machines]);
+
   async function loadMachines() {
     const res = await api.get("/machines");
     setMachines(res.data || []);
@@ -146,7 +154,7 @@ export default function Requests({ user }) {
   }
 
   async function loadAll() {
-    await Promise.all([loadMachines(), loadRequests()]);
+    await Promise.all([loadMachines(), loadRequests(), loadRecommendations()]);
   }
 
   useEffect(() => {
@@ -167,9 +175,23 @@ export default function Requests({ user }) {
   async function refresh() {
     setError("");
     try {
-      await Promise.all([loadRequests(), loadMachines()]);
+      await Promise.all([loadRequests(), loadMachines(), loadRecommendations()]);
     } catch (e) {
       setError(e?.response?.data?.message || e.message);
+    }
+  }
+
+  async function loadRecommendations() {
+    if (!isCustomer) return;
+    setLoadingRecommendations(true);
+    try {
+      const res = await api.post("/ai/recommendations/machines", { limit: 5 });
+      setRecommendations(res.data?.items || []);
+    } catch (e) {
+      setRecommendations([]);
+      setError((prev) => prev || e?.response?.data?.message || e.message);
+    } finally {
+      setLoadingRecommendations(false);
     }
   }
 
@@ -200,7 +222,7 @@ export default function Requests({ user }) {
       }));
 
       setOpenCreate(false);
-      await Promise.all([loadRequests(), loadMachines()]);
+      await Promise.all([loadRequests(), loadMachines(), loadRecommendations()]);
     } catch (err) {
       setError(err?.response?.data?.message || err.message);
     } finally {
@@ -220,7 +242,7 @@ export default function Requests({ user }) {
     setActingId(reqItem._id);
     try {
       await api.post(`/requests/${reqItem._id}/approve`, {});
-      await Promise.all([loadRequests(), loadMachines()]);
+      await Promise.all([loadRequests(), loadMachines(), loadRecommendations()]);
     } catch (err) {
       setError(err?.response?.data?.message || err.message);
     } finally {
@@ -240,7 +262,7 @@ export default function Requests({ user }) {
     setActingId(reqItem._id);
     try {
       await api.post(`/requests/${reqItem._id}/reject`, {});
-      await Promise.all([loadRequests(), loadMachines()]);
+      await Promise.all([loadRequests(), loadMachines(), loadRecommendations()]);
     } catch (err) {
       setError(err?.response?.data?.message || err.message);
     } finally {
@@ -444,6 +466,56 @@ export default function Requests({ user }) {
       </div>
 
       <Separator />
+
+      {isCustomer ? (
+        <Card className="rounded-[22px] border border-indigo-200/70 bg-indigo-50/60 backdrop-blur dark:border-indigo-500/25 dark:bg-indigo-500/10">
+          <CardContent className="p-4 sm:p-5">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">AI machine recommendations</h3>
+              <Button size="sm" variant="outline" onClick={loadRecommendations} disabled={loadingRecommendations}>
+                {loadingRecommendations ? "Refreshing..." : "Refresh AI"}
+              </Button>
+            </div>
+
+            {recommendations.length === 0 ? (
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                {loadingRecommendations ? "Generating recommendations..." : "No recommendations yet."}
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {recommendations.map((item) => {
+                  const machine = machineById[item.machineId];
+                  return (
+                    <div
+                      key={item.machineId}
+                      className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950/50"
+                    >
+                      <div className="mb-1 flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {machine?.name || "Recommended machine"}
+                        </div>
+                        <Badge variant="outline">score {item.score}</Badge>
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300">{item.explanation}</p>
+                      <div className="mt-2">
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setOpenCreate(true);
+                            setForm((f) => ({ ...f, machineId: item.machineId }));
+                          }}
+                        >
+                          Use in request
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <div className="relative">
         <div className="pointer-events-none absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-200/55 via-white/0 to-violet-200/55 blur-2xl dark:from-indigo-500/12 dark:to-violet-500/12" />

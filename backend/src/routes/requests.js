@@ -7,6 +7,8 @@ const Rental = require("../models/Rental");
 const Machine = require("../models/Machine");
 const User = require("../models/User");
 const Customer = require("../models/Customer");
+const CustomerBehaviorEvent = require("../models/CustomerBehaviorEvent");
+const { logAuditEvent } = require("../services/auditLogger");
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
 
@@ -66,6 +68,24 @@ router.post("/", auth, requireRole("customer"), async (req, res) => {
       notes: notes?.trim() || undefined
     });
 
+    await Promise.all([
+      logAuditEvent({
+        actorUser: req.user.sub,
+        actorRole: req.user.role,
+        eventType: "request_created",
+        entityType: "RentalRequest",
+        entityId: item._id,
+        metadata: { machineId: machine._id, startDate: item.startDate }
+      }),
+      CustomerBehaviorEvent.create({
+        customerUser: req.user.sub,
+        eventType: "request_machine",
+        machine: machine._id,
+        location: machine.location,
+        payload: { dailyRate: machine.dailyRate, status: machine.status }
+      })
+    ]);
+
     const populated = await RentalRequest.findById(item._id)
       .populate("machine", "name type serialNumber dailyRate status")
       .populate("customerUser", "name email role");
@@ -113,6 +133,15 @@ router.post("/:id/cancel", auth, requireRole("customer"), async (req, res) => {
       machine.status = "available";
       await machine.save();
     }
+
+    await logAuditEvent({
+      actorUser: req.user.sub,
+      actorRole: req.user.role,
+      eventType: "request_cancelled",
+      entityType: "RentalRequest",
+      entityId: reqItem._id,
+      metadata: { machineId: reqItem.machine }
+    });
 
     const populated = await RentalRequest.findById(reqItem._id)
       .populate("machine", "name type serialNumber dailyRate status")
@@ -177,6 +206,24 @@ router.post("/:id/approve", auth, requireRole("admin", "staff"), async (req, res
     reqItem.rental = rental._id;
     await reqItem.save();
 
+    await Promise.all([
+      logAuditEvent({
+        actorUser: req.user.sub,
+        actorRole: req.user.role,
+        eventType: "request_approved",
+        entityType: "RentalRequest",
+        entityId: reqItem._id,
+        metadata: { rentalId: rental._id, machineId: machine._id }
+      }),
+      CustomerBehaviorEvent.create({
+        customerUser: reqItem.customerUser,
+        eventType: "approve_request",
+        machine: machine._id,
+        location: machine.location,
+        payload: { rentalId: rental._id }
+      })
+    ]);
+
     const populated = await RentalRequest.findById(reqItem._id)
       .populate("machine", "name type serialNumber dailyRate status")
       .populate("customerUser", "name email role")
@@ -208,6 +255,22 @@ router.post("/:id/reject", auth, requireRole("admin", "staff"), async (req, res)
       machine.status = "available";
       await machine.save();
     }
+
+    await Promise.all([
+      logAuditEvent({
+        actorUser: req.user.sub,
+        actorRole: req.user.role,
+        eventType: "request_rejected",
+        entityType: "RentalRequest",
+        entityId: reqItem._id,
+        metadata: { machineId: reqItem.machine }
+      }),
+      CustomerBehaviorEvent.create({
+        customerUser: reqItem.customerUser,
+        eventType: "reject_request",
+        machine: reqItem.machine
+      })
+    ]);
 
     const populated = await RentalRequest.findById(reqItem._id)
       .populate("machine", "name type serialNumber dailyRate status")

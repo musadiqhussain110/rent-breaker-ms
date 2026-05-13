@@ -8,6 +8,7 @@ const rentalRoutes = require('./routes/rentals');
 const maintenanceRoutes = require('./routes/maintenance');
 const reportRoutes = require('./routes/reports');
 const requestRoutes = require('./routes/requests'); // ✅ ADD THIS
+const aiRoutes = require('./routes/ai');
 const dotenv = require('dotenv');
 const cors = require('cors');
 
@@ -42,6 +43,7 @@ app.use('/api/rentals', rentalRoutes);
 app.use('/api/maintenance', maintenanceRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/requests', requestRoutes); // ✅ ADD THIS
+app.use('/api/ai', aiRoutes);
 
 // 404 handler (optional but helpful)
 app.use((req, res) => {
