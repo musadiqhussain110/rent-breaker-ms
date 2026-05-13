@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const DEFAULT_API_BASE_URL = "https://rent-breaker-ms.onrender.com/api";
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") || DEFAULT_API_BASE_URL;
+const configuredApiBaseUrl = import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL;
+const API_BASE_URL = configuredApiBaseUrl.replace(/\/+$/, "");
 
 export function setToken(token) {
   if (token) localStorage.setItem("token", token);

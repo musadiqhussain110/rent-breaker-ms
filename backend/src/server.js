@@ -33,7 +33,7 @@ const allowedOrigins = new Set([
   ...configuredAllowedOrigins,
 ]);
 
-const defaultVercelPreviewOriginRegex = /^https:\/\/rent-breaker-[a-z0-9-]+-musadiqhussain110s-projects\.vercel\.app$/;
+const defaultVercelPreviewOriginRegex = /^https:\/\/rent-breaker-[a-z0-9]+(?:-[a-z0-9]+)*-musadiqhussain110s-projects\.vercel\.app$/;
 const vercelPreviewOriginRegex = (() => {
   if (!process.env.VERCEL_PREVIEW_ORIGIN_REGEX) {
     return defaultVercelPreviewOriginRegex;
