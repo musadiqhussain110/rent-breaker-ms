@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const auth = require("../middleware/auth");
 const requireRole = require("../middleware/requireRole");
+const createRateLimit = require("../middleware/rateLimit");
 
 const Machine = require("../models/Machine");
 const Rental = require("../models/Rental");
@@ -9,23 +10,27 @@ const Customer = require("../models/Customer");
 const CustomerBehaviorEvent = require("../models/CustomerBehaviorEvent");
 
 const { getMachineRecommendations } = require("../services/aiClient");
+const aiReadLimiter = createRateLimit({ windowMs: 60_000, max: 120 });
+const aiWriteLimiter = createRateLimit({ windowMs: 60_000, max: 40 });
 
-router.get("/health", auth, requireRole("admin", "staff", "customer"), async (req, res) => {
+router.get("/health", aiReadLimiter, auth, requireRole("admin", "staff", "customer"), async (req, res) => {
   res.json({ ok: true, service: "ai", aiServiceUrl: process.env.AI_SERVICE_URL || "http://localhost:8000" });
 });
 
-router.post("/recommendations/machines", auth, requireRole("admin", "staff", "customer"), async (req, res) => {
+router.post("/recommendations/machines", aiWriteLimiter, auth, requireRole("admin", "staff", "customer"), async (req, res) => {
   try {
     const { location, limit } = req.body || {};
     const cappedLimit = Math.min(Math.max(Number(limit) || 5, 1), 20);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
     const machineFilter = { status: "available" };
     if (location) machineFilter.location = String(location);
 
     const [machines, rentals, maintenance, behaviorEvents, customer] = await Promise.all([
       Machine.find(machineFilter).lean(),
-      Rental.find({}).sort({ createdAt: -1 }).limit(2000).lean(),
-      Maintenance.find({}).sort({ createdAt: -1 }).limit(2000).lean(),
+      Rental.find({ createdAt: { $gte: oneYearAgo } }).sort({ createdAt: -1 }).limit(2000).lean(),
+      Maintenance.find({ createdAt: { $gte: oneYearAgo } }).sort({ createdAt: -1 }).limit(2000).lean(),
       req.user.role === "customer"
         ? CustomerBehaviorEvent.find({ customerUser: req.user.sub }).sort({ createdAt: -1 }).limit(500).lean()
         : Promise.resolve([]),

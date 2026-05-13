@@ -11,6 +11,16 @@ from sklearn.preprocessing import StandardScaler
 
 
 app = FastAPI(title="rent-breaker-ai-service", version="1.0.0")
+CONTENT_WEIGHT = 0.65
+COLLABORATIVE_WEIGHT = 0.25
+BEHAVIOR_WEIGHT = 0.10
+
+MIN_DAYS = 3.0
+BASE_DAYS = 60.0
+USAGE_FACTOR = 0.01
+BREAKDOWN_FACTOR = 4.0
+FREQUENCY_FACTOR = 2.0
+UPTIME_FACTOR = 0.8
 
 
 class RecommendationUser(BaseModel):
@@ -145,7 +155,12 @@ def recommend_machines(payload: RecommendationRequest) -> Dict[str, Any]:
         behavior_score = behavior_boost_by_machine[machine_id] / max(max(behavior_boost_by_machine.values(), default=1), 1)
         loc = str(machine.get("location") or "").lower().strip()
         location_boost = 0.1 if preferred_location and loc == preferred_location else 0.0
-        combined = (0.65 * float(content_scores[idx])) + (0.25 * pop_score) + (0.10 * behavior_score) + location_boost
+        combined = (
+            (CONTENT_WEIGHT * float(content_scores[idx]))
+            + (COLLABORATIVE_WEIGHT * pop_score)
+            + (BEHAVIOR_WEIGHT * behavior_score)
+            + location_boost
+        )
 
         maintenance_cost = _safe_float(maintenance_cost_by_machine.get(machine_id), 0)
         explanation = (
@@ -186,7 +201,14 @@ def predictive_maintenance(payload: PredictiveMaintenanceRequest) -> Dict[str, A
         uptime = _safe_float(machine.get("uptimePercent"), 100)
         feature = [usage_hours, breakdown, freq, avg_cost, uptime]
         # synthetic target: risk proxy in days until likely maintenance event
-        target = max(3.0, 60.0 - (usage_hours * 0.01) - (breakdown * 4.0) - (freq * 2.0) - ((100 - uptime) * 0.8))
+        target = max(
+            MIN_DAYS,
+            BASE_DAYS
+            - (usage_hours * USAGE_FACTOR)
+            - (breakdown * BREAKDOWN_FACTOR)
+            - (freq * FREQUENCY_FACTOR)
+            - ((100 - uptime) * UPTIME_FACTOR),
+        )
         features.append(feature)
         targets.append(target)
         rows.append((machine_id, machine))

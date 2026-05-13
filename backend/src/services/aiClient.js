@@ -1,4 +1,4 @@
-const DEFAULT_TIMEOUT_MS = 8000;
+const AI_SERVICE_TIMEOUT_MS = 8000;
 
 function getAiBaseUrl() {
   return process.env.AI_SERVICE_URL || "http://localhost:8000";
@@ -6,7 +6,7 @@ function getAiBaseUrl() {
 
 async function fetchJson(path, payload) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), AI_SERVICE_TIMEOUT_MS);
 
   try {
     const res = await fetch(`${getAiBaseUrl()}${path}`, {

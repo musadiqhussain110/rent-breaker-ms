@@ -8,6 +8,8 @@ const CustomerBehaviorEvent = require("../models/CustomerBehaviorEvent");
 const { logAuditEvent } = require("../services/auditLogger");
 
 const PDFDocument = require("pdfkit");
+const ASSUMED_HOURS_PER_DAY = 8;
+const UTILIZATION_INCREMENT = 0.02;
 
 // NOTE:
 // - rentalsReadWrite is for admin/staff/operator only
@@ -210,8 +212,8 @@ router.post("/:id/return", ...rentalsReadWrite, async (req, res) => {
     await rental.save();
 
     machine.status = "available";
-    machine.usageHours = Number(machine.usageHours || 0) + (billableDays * 8);
-    machine.utilizationScore = Math.min(1, Number(machine.utilizationScore || 0) + 0.02);
+    machine.usageHours = Number(machine.usageHours || 0) + (billableDays * ASSUMED_HOURS_PER_DAY);
+    machine.utilizationScore = Math.min(1, Number(machine.utilizationScore || 0) + UTILIZATION_INCREMENT);
     await machine.save();
 
     await logAuditEvent({

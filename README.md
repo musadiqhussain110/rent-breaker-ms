@@ -72,3 +72,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+## Docker Compose (Backend + AI + MongoDB)
+Set a strong `JWT_SECRET` in your shell, then run:
+```bash
+export JWT_SECRET=your_strong_secret
+docker compose up --build
+```
