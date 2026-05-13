@@ -122,8 +122,8 @@ def recommend_machines(payload: RecommendationRequest) -> Dict[str, Any]:
         user_pref_vector = np.array([
             -1.0,  # lower price preferred
             1.0,   # higher uptime preferred
-            0.5,
-            0.0,
+            0.5,   # slight preference for historically utilized machines
+            0.0,   # neutral weight for raw usage hours in cold-start mode
             -0.5,  # lower breakdown preferred
             -0.5,  # lower maintenance cost preferred
         ])
@@ -216,7 +216,7 @@ def predictive_maintenance(payload: PredictiveMaintenanceRequest) -> Dict[str, A
         rows.append((machine_id, machine))
 
     # Bootstrap mode: train using current snapshot each call until offline training pipeline is introduced.
-    model = RandomForestRegressor(n_estimators=80, random_state=42)
+    model = RandomForestRegressor(n_estimators=50, random_state=42)
     X = np.array(features, dtype=float)
     y = np.array(targets, dtype=float)
     model.fit(X, y)
@@ -264,7 +264,7 @@ def demand_forecast(payload: DemandForecastRequest) -> Dict[str, Any]:
         y.append(monthly_counts[month])
 
     # Bootstrap mode: train from request data until scheduled model training is added.
-    model = RandomForestRegressor(n_estimators=120, random_state=42)
+    model = RandomForestRegressor(n_estimators=80, random_state=42)
     model.fit(np.array(X, dtype=float), np.array(y, dtype=float))
 
     horizon = max(1, min(payload.horizonMonths, 6))

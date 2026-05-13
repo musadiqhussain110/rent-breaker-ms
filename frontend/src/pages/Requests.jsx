@@ -189,7 +189,14 @@ export default function Requests({ user }) {
       setRecommendations(res.data?.items || []);
     } catch (e) {
       setRecommendations([]);
-      setError((prev) => prev || e?.response?.data?.message || e.message);
+      const status = e?.response?.status;
+      const message =
+        status === 502
+          ? "AI service is temporarily unavailable. Please try again shortly."
+          : status === 429
+            ? "Too many AI requests right now. Please wait and retry."
+            : e?.response?.data?.message || e.message;
+      setError((prev) => prev || message);
     } finally {
       setLoadingRecommendations(false);
     }

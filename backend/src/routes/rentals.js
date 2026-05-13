@@ -214,7 +214,8 @@ router.post("/:id/return", ...rentalsReadWrite, async (req, res) => {
     await rental.save();
 
     machine.status = "available";
-    machine.usageHours = Number(machine.usageHours || 0) + (billableDays * ASSUMED_HOURS_PER_DAY);
+    const safeBillableDays = Number(billableDays) || 0;
+    machine.usageHours = Number(machine.usageHours || 0) + (safeBillableDays * ASSUMED_HOURS_PER_DAY);
     machine.utilizationScore = Math.min(1, Number(machine.utilizationScore || 0) + UTILIZATION_INCREMENT);
     await machine.save();
 

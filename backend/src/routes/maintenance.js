@@ -50,7 +50,8 @@ router.post("/", ...maintUsers, async (req, res) => {
       startDate: startDate ? new Date(startDate) : new Date(),
       type: type || "preventive",
       breakdownEvent: !!breakdownEvent,
-      usageHoursAtService: usageHoursAtService !== undefined ? Number(usageHoursAtService) : undefined
+      usageHoursAtService:
+        usageHoursAtService !== undefined ? Math.max(0, Number(usageHoursAtService) || 0) : undefined
     });
 
     machine.status = "maintenance";

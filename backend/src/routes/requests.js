@@ -75,7 +75,7 @@ router.post("/", auth, requireRole("customer"), async (req, res) => {
         eventType: "request_created",
         entityType: "RentalRequest",
         entityId: item._id,
-        metadata: { machineId: machine._id, startDate: item.startDate }
+        metadata: { machineId: String(machine._id), startDate: item.startDate }
       }),
       CustomerBehaviorEvent.create({
         customerUser: req.user.sub,

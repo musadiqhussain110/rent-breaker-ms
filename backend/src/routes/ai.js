@@ -39,8 +39,8 @@ router.post("/recommendations/machines", aiWriteLimiter, auth, requireRole("admi
 
     const [machines, rentals, maintenance, behaviorEvents, customer] = await Promise.all([
       Machine.find(machineFilter).lean(),
-      Rental.find({ createdAt: { $gte: oneYearAgo } }).sort({ createdAt: -1 }).limit(2000).lean(),
-      Maintenance.find({ createdAt: { $gte: oneYearAgo } }).sort({ createdAt: -1 }).limit(2000).lean(),
+      Rental.find({ createdAt: { $gte: oneYearAgo } }).sort({ createdAt: -1 }).limit(1000).lean(),
+      Maintenance.find({ createdAt: { $gte: oneYearAgo } }).sort({ createdAt: -1 }).limit(1000).lean(),
       req.user.role === "customer"
         ? CustomerBehaviorEvent.find({ customerUser: req.user.sub }).sort({ createdAt: -1 }).limit(500).lean()
         : Promise.resolve([]),
