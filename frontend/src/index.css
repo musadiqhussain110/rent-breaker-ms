@@ -1,5 +1,7 @@
-@import "tw-animate-css";
-@import "@fontsource-variable/inter";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/inter/700.css";
 
 @tailwind base;
 @tailwind components;
@@ -7,70 +9,70 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 60% 10%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222 60% 10%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 60% 10%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 239 84% 67%;
+    --primary: 222 47% 11%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 60% 12%;
+    --secondary: 217 91% 56%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 215 16% 42%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 40%;
 
-    --accent: 226 100% 97%;
-    --accent-foreground: 239 84% 30%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 138 62% 12%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 86%;
-    --input: 220 13% 86%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
 
-    --ring: 239 84% 67%;
-    --radius: 1rem;
+    --ring: 217 91% 56%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222 84% 5%;
+    --background: 222 47% 10%;
     --foreground: 210 40% 98%;
 
-    --card: 222 84% 6%;
+    --card: 222 47% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 84% 6%;
+    --popover: 222 47% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 239 84% 67%;
-    --primary-foreground: 222 47% 12%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
 
-    --secondary: 217 33% 17%;
+    --secondary: 217 91% 56%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 17%;
+    --muted: 217 32% 18%;
     --muted-foreground: 215 20% 65%;
 
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 138 62% 12%;
 
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 239 84% 67%;
+    --border: 217 30% 25%;
+    --input: 217 30% 25%;
+    --ring: 217 91% 56%;
   }
 
   html {
-    font-family: "Inter Variable", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial,
-      "Apple Color Emoji", "Segoe UI Emoji";
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji",
+      "Segoe UI Emoji";
   }
 
   body {
@@ -78,7 +80,27 @@
   }
 }
 
-/* ✅ Animated wash (subtle gradient shift) */
+@layer components {
+  .rb-content {
+    @apply mx-auto w-full max-w-6xl px-4 md:px-6;
+  }
+
+  .rb-container {
+    @apply rb-content;
+  }
+
+  .rb-table-shell {
+    @apply overflow-x-auto rounded-xl border bg-card;
+  }
+
+  .rb-animated-wash {
+    @apply absolute inset-0;
+    background: radial-gradient(55% 45% at 25% 20%, hsl(var(--secondary) / 0.18), transparent 60%),
+      radial-gradient(55% 45% at 75% 25%, hsl(var(--accent) / 0.12), transparent 60%);
+    animation: rb-wash 10s ease-in-out infinite;
+  }
+}
+
 @keyframes rb-wash {
   0% {
     transform: translate3d(-2%, -1%, 0) rotate(-1deg);
@@ -86,24 +108,10 @@
   }
   50% {
     transform: translate3d(2%, 1%, 0) rotate(1deg);
-    opacity: 0.70;
+    opacity: 0.7;
   }
   100% {
     transform: translate3d(-2%, -1%, 0) rotate(-1deg);
     opacity: 0.55;
-  }
-}
-
-@layer components {
-  .rb-container {
-    @apply mx-auto w-full max-w-6xl px-4;
-  }
-
-  .rb-animated-wash {
-    @apply absolute inset-0;
-    background: radial-gradient(55% 45% at 25% 20%, rgba(99, 102, 241, 0.18), transparent 60%),
-      radial-gradient(55% 45% at 75% 25%, rgba(124, 58, 237, 0.14), transparent 60%),
-      radial-gradient(60% 55% at 50% 80%, rgba(56, 189, 248, 0.12), transparent 60%);
-    animation: rb-wash 10s ease-in-out infinite;
   }
 }

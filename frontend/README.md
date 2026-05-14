@@ -1,16 +1,50 @@
-# React + Vite
+# Frontend (Vite + React)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Run locally
 
-Currently, two official plugins are available:
+From the monorepo root:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```bash
+npm ci
+npm run dev --workspace frontend
+```
 
-## React Compiler
+Build:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+npm run build --workspace frontend
+```
 
-## Expanding the ESLint configuration
+## UI foundation setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+This frontend uses:
+
+- **Tailwind CSS** (`tailwind.config.js`, `src/index.css`)
+- **shadcn/ui** components in `src/components/ui`
+- **Inter** font via `@fontsource/inter`
+
+### Theme tokens
+
+Core palette is defined with CSS variables in `src/index.css` and consumed by Tailwind/shadcn:
+
+- Primary: `#0F172A`
+- Secondary: `#2563EB`
+- Accent: `#22C55E`
+- Background: `#F8FAFC`
+
+### App layout
+
+Authenticated pages share a consistent shell:
+
+- Fixed left sidebar navigation
+- Top navbar with current page title + user chip/actions
+- Centered content area (`rb-content`) with spacing and max-width
+
+### UX primitives
+
+Reusable primitives available in the codebase:
+
+- Toasts (`sonner`, app-level `Toaster`)
+- Loading skeleton (`src/components/ui/skeleton.jsx`)
+- Empty state component (`src/components/rb/EmptyState.jsx`)
+- Status badge component (`src/components/rb/StatusBadge.jsx`)

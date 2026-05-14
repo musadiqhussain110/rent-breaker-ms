@@ -1,13 +1,18 @@
+import tailwindcssAnimate from "tailwindcss-animate";
+
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: ["class"],
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
+      },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 4px)"
       },
       colors: {
         background: "hsl(var(--background))",
@@ -28,9 +33,9 @@ export default {
         "destructive-foreground": "hsl(var(--destructive-foreground))",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-      },
-    },
+        ring: "hsl(var(--ring))"
+      }
+    }
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate]
 };

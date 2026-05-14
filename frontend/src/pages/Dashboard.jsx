@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 
+import { EmptyState } from "@/components/rb/EmptyState";
 import { PageHeader } from "@/components/rb/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
@@ -24,18 +26,12 @@ function fmtDate(d) {
 
 function MetricPill({ label, value, tone = "default" }) {
   const tones = {
-    default:
-      "border-slate-200 bg-white/70 text-slate-700 dark:border-slate-800 dark:bg-slate-950/55 dark:text-slate-200",
-    indigo:
-      "border-indigo-200 bg-indigo-50/70 text-indigo-800 dark:border-indigo-500/25 dark:bg-indigo-500/10 dark:text-indigo-200",
-    emerald:
-      "border-emerald-200 bg-emerald-50/70 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-200",
-    blue:
-      "border-blue-200 bg-blue-50/70 text-blue-900 dark:border-blue-500/25 dark:bg-blue-500/10 dark:text-blue-200",
-    amber:
-      "border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200",
-    rose:
-      "border-rose-200 bg-rose-50/70 text-rose-900 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-200"
+    default: "border-border bg-muted text-muted-foreground",
+    indigo: "border-primary/25 bg-primary/10 text-primary",
+    emerald: "border-accent/25 bg-accent/10 text-accent",
+    blue: "border-secondary/25 bg-secondary/10 text-secondary",
+    amber: "border-secondary/25 bg-secondary/10 text-secondary",
+    rose: "border-border bg-muted text-muted-foreground"
   };
 
   return (
@@ -45,41 +41,24 @@ function MetricPill({ label, value, tone = "default" }) {
   );
 }
 
-function EmptyState({ title, subtitle, action }) {
-  return (
-    <div className="rounded-[22px] border border-slate-200 bg-white/70 p-10 text-center shadow-[0_18px_60px_rgba(2,6,23,0.08)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/45">
-      <div className="mx-auto mb-4 h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-slate-900 shadow-sm" />
-      <h3 className="text-base font-semibold text-slate-950 dark:text-slate-50">{title}</h3>
-      {subtitle ? <p className="mx-auto mt-1 max-w-md text-sm text-slate-600 dark:text-slate-300">{subtitle}</p> : null}
-      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
-    </div>
-  );
-}
-
 function QuickAction({ to, label, hint, tone = "default" }) {
   const tones = {
-    default:
-      "border-slate-200/80 bg-white/70 hover:bg-white/90 dark:border-slate-800 dark:bg-slate-950/45 dark:hover:bg-slate-950/70",
-    indigo:
-      "border-indigo-200/70 bg-indigo-50/70 hover:bg-indigo-50 dark:border-indigo-500/25 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/15",
-    emerald:
-      "border-emerald-200/70 bg-emerald-50/70 hover:bg-emerald-50 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/15",
-    amber:
-      "border-amber-200/70 bg-amber-50/70 hover:bg-amber-50 dark:border-amber-500/25 dark:bg-amber-500/10 dark:hover:bg-amber-500/15",
-    rose:
-      "border-rose-200/70 bg-rose-50/70 hover:bg-rose-50 dark:border-rose-500/25 dark:bg-rose-500/10 dark:hover:bg-rose-500/15",
-    blue:
-      "border-blue-200/70 bg-blue-50/70 hover:bg-blue-50 dark:border-blue-500/25 dark:bg-blue-500/10 dark:hover:bg-blue-500/15"
+    default: "border-border/80 bg-card hover:bg-muted",
+    indigo: "border-primary/20 bg-primary/5 hover:bg-primary/10",
+    emerald: "border-accent/25 bg-accent/5 hover:bg-accent/10",
+    amber: "border-secondary/20 bg-secondary/5 hover:bg-secondary/10",
+    rose: "border-border/80 bg-card hover:bg-muted",
+    blue: "border-secondary/20 bg-secondary/5 hover:bg-secondary/10"
   };
 
   return (
-    <Link
-      to={to}
-      className={cn(
-        "group block rounded-[22px] border p-5 shadow-[0_18px_60px_rgba(2,6,23,0.06)] backdrop-blur transition-colors",
-        tones[tone] || tones.default
-      )}
-    >
+      <Link
+        to={to}
+        className={cn(
+          "group block rounded-xl border p-5 transition-colors",
+          tones[tone] || tones.default
+        )}
+      >
       <div className="text-sm font-semibold text-slate-950 dark:text-slate-50">{label}</div>
       <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{hint}</div>
       <div className="mt-4 text-xs font-medium text-slate-700 opacity-80 group-hover:opacity-100 dark:text-slate-200">
@@ -194,8 +173,16 @@ export default function Dashboard({ user }) {
       <Separator />
 
       {error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
         </div>
       ) : null}
 
@@ -227,11 +214,10 @@ export default function Dashboard({ user }) {
       </div>
 
       {/* Admin/Staff: Summary block */}
-      {role === "admin" || role === "staff" ? (
+      {!loading && (role === "admin" || role === "staff") ? (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <div className="relative">
-            <div className="pointer-events-none absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-200/55 via-white/0 to-violet-200/55 blur-2xl dark:from-indigo-500/12 dark:to-violet-500/12" />
-            <Card className="relative rounded-[26px] border border-slate-200/80 bg-white/70 shadow-[0_24px_90px_rgba(2,6,23,0.10)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/45 dark:shadow-[0_24px_90px_rgba(0,0,0,0.40)]">
+            <Card className="relative border-border/80 bg-card">
               <CardContent className="p-4 sm:p-5">
                 <div className="mb-4">
                   <div className="text-base font-semibold text-slate-950 dark:text-slate-50">Machines by status</div>
@@ -241,21 +227,21 @@ export default function Dashboard({ user }) {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  <div className="rounded-[22px] border border-emerald-200/60 bg-emerald-50/70 p-4 dark:border-emerald-500/25 dark:bg-emerald-500/10">
-                    <div className="text-xs text-emerald-900/80 dark:text-emerald-200/80">available</div>
-                    <div className="mt-2 text-2xl font-semibold text-emerald-950 dark:text-emerald-200">{available}</div>
+                  <div className="rounded-xl border border-accent/30 bg-accent/10 p-4">
+                    <div className="text-xs text-accent">available</div>
+                    <div className="mt-2 text-2xl font-semibold text-accent">{available}</div>
                   </div>
-                  <div className="rounded-[22px] border border-blue-200/60 bg-blue-50/70 p-4 dark:border-blue-500/25 dark:bg-blue-500/10">
-                    <div className="text-xs text-blue-900/80 dark:text-blue-200/80">reserved</div>
-                    <div className="mt-2 text-2xl font-semibold text-blue-950 dark:text-blue-200">{reserved}</div>
+                  <div className="rounded-xl border border-secondary/30 bg-secondary/10 p-4">
+                    <div className="text-xs text-secondary">reserved</div>
+                    <div className="mt-2 text-2xl font-semibold text-secondary">{reserved}</div>
                   </div>
-                  <div className="rounded-[22px] border border-amber-200/60 bg-amber-50/70 p-4 dark:border-amber-500/25 dark:bg-amber-500/10">
-                    <div className="text-xs text-amber-900/80 dark:text-amber-200/80">rented</div>
-                    <div className="mt-2 text-2xl font-semibold text-amber-950 dark:text-amber-200">{rented}</div>
+                  <div className="rounded-xl border border-primary/25 bg-primary/10 p-4">
+                    <div className="text-xs text-primary">rented</div>
+                    <div className="mt-2 text-2xl font-semibold text-primary">{rented}</div>
                   </div>
-                  <div className="rounded-[22px] border border-rose-200/60 bg-rose-50/70 p-4 dark:border-rose-500/25 dark:bg-rose-500/10">
-                    <div className="text-xs text-rose-900/80 dark:text-rose-200/80">maintenance</div>
-                    <div className="mt-2 text-2xl font-semibold text-rose-950 dark:text-rose-200">{maintenance}</div>
+                  <div className="rounded-xl border border-border bg-muted p-4">
+                    <div className="text-xs text-muted-foreground">maintenance</div>
+                    <div className="mt-2 text-2xl font-semibold text-foreground">{maintenance}</div>
                   </div>
                 </div>
 
@@ -267,8 +253,7 @@ export default function Dashboard({ user }) {
           </div>
 
           <div className="relative">
-            <div className="pointer-events-none absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-200/55 via-white/0 to-violet-200/55 blur-2xl dark:from-indigo-500/12 dark:to-violet-500/12" />
-            <Card className="relative rounded-[26px] border border-slate-200/80 bg-white/70 shadow-[0_24px_90px_rgba(2,6,23,0.10)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/45 dark:shadow-[0_24px_90px_rgba(0,0,0,0.40)]">
+            <Card className="relative border-border/80 bg-card">
               <CardContent className="p-4 sm:p-5">
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
@@ -283,17 +268,17 @@ export default function Dashboard({ user }) {
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div className="rounded-[22px] border border-slate-200/70 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                  <div className="rounded-xl border border-border bg-muted p-4">
                     <div className="text-xs text-slate-600 dark:text-slate-400">open</div>
                     <div className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">{openRentals}</div>
                   </div>
-                  <div className="rounded-[22px] border border-slate-200/70 bg-white/60 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+                  <div className="rounded-xl border border-border bg-muted p-4">
                     <div className="text-xs text-slate-600 dark:text-slate-400">closed</div>
                     <div className="mt-2 text-2xl font-semibold text-slate-950 dark:text-slate-50">{closedRentals}</div>
                   </div>
-                  <div className="rounded-[22px] border border-amber-200/70 bg-amber-50/70 p-4 dark:border-amber-500/25 dark:bg-amber-500/10">
-                    <div className="text-xs text-amber-900/80 dark:text-amber-200/80">revenue</div>
-                    <div className="mt-2 text-2xl font-semibold text-amber-950 dark:text-amber-200">
+                  <div className="rounded-xl border border-secondary/30 bg-secondary/10 p-4">
+                    <div className="text-xs text-secondary">revenue</div>
+                    <div className="mt-2 text-2xl font-semibold text-secondary">
                       {money(allRevenue)}
                     </div>
                   </div>
@@ -309,11 +294,9 @@ export default function Dashboard({ user }) {
       ) : null}
 
       {/* Customer: show recent rentals */}
-      {role === "customer" ? (
+      {!loading && role === "customer" ? (
         <div className="relative">
-          <div className="pointer-events-none absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-200/55 via-white/0 to-violet-200/55 blur-2xl dark:from-indigo-500/12 dark:to-violet-500/12" />
-
-          <Card className="relative rounded-[26px] border border-slate-200/80 bg-white/70 shadow-[0_24px_90px_rgba(2,6,23,0.10)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/45 dark:shadow-[0_24px_90px_rgba(0,0,0,0.40)]">
+          <Card className="relative border-border/80 bg-card">
             <CardContent className="p-4 sm:p-5">
               <div className="mb-4">
                 <div className="text-base font-semibold text-slate-950 dark:text-slate-50">Recent rentals</div>
@@ -322,9 +305,9 @@ export default function Dashboard({ user }) {
                 </div>
               </div>
 
-              <div className="overflow-x-auto rounded-[22px] border bg-white/80 shadow-sm backdrop-blur dark:bg-slate-950/50 dark:border-slate-800">
+              <div className="rb-table-shell">
                 <Table>
-                  <TableHeader className="sticky top-0 z-10 bg-white/90 backdrop-blur dark:bg-slate-950/70">
+                  <TableHeader className="sticky top-0 z-10 bg-card">
                     <TableRow>
                       <TableHead>Machine</TableHead>
                       <TableHead>Start</TableHead>
