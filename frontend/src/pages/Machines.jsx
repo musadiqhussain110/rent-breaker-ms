@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { api } from "../api";
 
 import { PageHeader } from "@/components/rb/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/rb/EmptyState";
+import { StatusBadge } from "@/components/rb/StatusBadge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -27,33 +30,6 @@ function fmtDate(d) {
   return dt.toISOString().slice(0, 10);
 }
 
-function StatusBadge({ status }) {
-  const s = String(status || "").toLowerCase();
-
-  const map = {
-    available:
-      "bg-emerald-100 text-emerald-900 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:border-emerald-500/25",
-    rented:
-      "bg-amber-100 text-amber-900 border-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:border-amber-500/25",
-    maintenance:
-      "bg-rose-100 text-rose-900 border-rose-200 dark:bg-rose-500/15 dark:text-rose-200 dark:border-rose-500/25",
-    reserved:
-      "bg-blue-100 text-blue-900 border-blue-200 dark:bg-blue-500/15 dark:text-blue-200 dark:border-blue-500/25"
-  };
-
-  return (
-    <Badge
-      variant="outline"
-      className={
-        map[s] ||
-        "bg-slate-100 text-slate-900 border-slate-200 dark:bg-slate-500/10 dark:text-slate-200 dark:border-slate-700"
-      }
-    >
-      {s || "unknown"}
-    </Badge>
-  );
-}
-
 const EMPTY_FORM = {
   name: "",
   type: "",
@@ -68,33 +44,17 @@ const EMPTY_FORM = {
 
 function MetricPill({ label, value, tone = "default" }) {
   const tones = {
-    default:
-      "border-slate-200 bg-white/70 text-slate-700 dark:border-slate-800 dark:bg-slate-950/55 dark:text-slate-200",
-    indigo:
-      "border-indigo-200 bg-indigo-50/70 text-indigo-800 dark:border-indigo-500/25 dark:bg-indigo-500/10 dark:text-indigo-200",
-    emerald:
-      "border-emerald-200 bg-emerald-50/70 text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-500/10 dark:text-emerald-200",
-    amber:
-      "border-amber-200 bg-amber-50/70 text-amber-900 dark:border-amber-500/25 dark:bg-amber-500/10 dark:text-amber-200",
-    rose:
-      "border-rose-200 bg-rose-50/70 text-rose-900 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-200"
+    default: "border-border bg-muted text-muted-foreground",
+    indigo: "border-primary/25 bg-primary/10 text-primary",
+    emerald: "border-accent/25 bg-accent/10 text-accent",
+    amber: "border-secondary/25 bg-secondary/10 text-secondary",
+    rose: "border-border bg-muted text-muted-foreground"
   };
 
   return (
     <div className={`rounded-full border px-3 py-1 text-xs shadow-sm backdrop-blur ${tones[tone] || tones.default}`}>
       <span className="font-medium">{value}</span>{" "}
       <span className="opacity-80">{label}</span>
-    </div>
-  );
-}
-
-function EmptyState({ title, subtitle, action }) {
-  return (
-    <div className="rounded-[22px] border border-slate-200 bg-white/70 p-10 text-center shadow-[0_18px_60px_rgba(2,6,23,0.08)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/45">
-      <div className="mx-auto mb-4 h-11 w-11 rounded-2xl bg-gradient-to-br from-indigo-600 to-slate-900 shadow-sm" />
-      <h3 className="text-base font-semibold text-slate-950 dark:text-slate-50">{title}</h3>
-      {subtitle ? <p className="mx-auto mt-1 max-w-md text-sm text-slate-600 dark:text-slate-300">{subtitle}</p> : null}
-      {action ? <div className="mt-5 flex justify-center">{action}</div> : null}
     </div>
   );
 }
@@ -121,7 +81,9 @@ export default function Machines({ user }) {
       const res = await api.get("/machines");
       setRows(res.data || []);
     } catch (e) {
-      setErr(e?.response?.data?.message || e.message || "Failed to load machines");
+      const message = e?.response?.data?.message || e.message || "Failed to load machines";
+      setErr(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -172,6 +134,7 @@ export default function Machines({ user }) {
       setOpenCreate(false);
       setForm(EMPTY_FORM);
       await load();
+      toast.success("Machine added successfully.");
     } catch (e) {
       setErr(e?.response?.data?.message || e.message || "Create machine failed");
     } finally {
@@ -351,19 +314,17 @@ export default function Machines({ user }) {
 
       {/* Premium container card (glow + blur) */}
       <div className="relative">
-        <div className="pointer-events-none absolute -inset-6 rounded-[36px] bg-gradient-to-br from-indigo-200/55 via-white/0 to-violet-200/55 blur-2xl dark:from-indigo-500/12 dark:to-violet-500/12" />
-
-        <Card className="relative rounded-[26px] border border-slate-200/80 bg-white/70 shadow-[0_24px_90px_rgba(2,6,23,0.10)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/45 dark:shadow-[0_24px_90px_rgba(0,0,0,0.40)]">
+        <Card className="relative border-border/80 bg-card">
           <CardContent className="p-4 sm:p-5">
             {err ? (
-              <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+              <div className="mb-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
                 {err}
               </div>
             ) : null}
 
-            <div className="overflow-x-auto rounded-[22px] border bg-white/80 shadow-sm backdrop-blur dark:bg-slate-950/50 dark:border-slate-800">
+            <div className="rb-table-shell">
               <Table>
-                <TableHeader className="sticky top-0 z-10 bg-white/90 backdrop-blur dark:bg-slate-950/70">
+                <TableHeader className="sticky top-0 z-10 bg-card">
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Type</TableHead>
@@ -378,11 +339,13 @@ export default function Machines({ user }) {
 
                 <TableBody>
                   {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="py-12 text-center text-sm text-slate-600 dark:text-slate-300">
-                        Loading machines…
-                      </TableCell>
-                    </TableRow>
+                    Array.from({ length: 5 }).map((_, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell colSpan={8}>
+                          <Skeleton className="h-8 w-full" />
+                        </TableCell>
+                      </TableRow>
+                    ))
                   ) : filtered.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="py-8">
