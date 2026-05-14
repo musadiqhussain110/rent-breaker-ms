@@ -95,8 +95,8 @@
 
   .rb-animated-wash {
     @apply absolute inset-0;
-    background: radial-gradient(55% 45% at 25% 20%, rgb(37 99 235 / 0.18), transparent 60%),
-      radial-gradient(55% 45% at 75% 25%, rgb(34 197 94 / 0.12), transparent 60%);
+    background: radial-gradient(55% 45% at 25% 20%, hsl(var(--secondary) / 0.18), transparent 60%),
+      radial-gradient(55% 45% at 75% 25%, hsl(var(--accent) / 0.12), transparent 60%);
     animation: rb-wash 10s ease-in-out infinite;
   }
 }

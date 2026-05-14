@@ -5,7 +5,7 @@ import {
   ClipboardList,
   LayoutDashboard,
   Settings,
-  Users,
+  Users as UsersIcon,
   UserSquare2,
   Wrench
 } from "lucide-react";
@@ -19,7 +19,7 @@ import Rentals from "./pages/Rentals";
 import Maintenance from "./pages/Maintenance";
 import Reports from "./pages/Reports";
 import Requests from "./pages/Requests";
-import UsersPage from "./pages/Users";
+import Users from "./pages/Users";
 import MyRentals from "./pages/MyRentals";
 
 import { api, setToken } from "./api";
@@ -89,12 +89,12 @@ function AppLayout({ user, onLogout, theme, setTheme, children }) {
       { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "staff", "operator", "customer"] },
       { to: "/machines", label: "Machines", icon: Settings, roles: ["admin", "staff", "operator"] },
       { to: "/rentals", label: "Rentals", icon: ClipboardList, roles: ["admin", "staff", "operator"] },
-      { to: "/customers", label: "Customers", icon: Users, roles: ["admin", "staff"] },
+      { to: "/customers", label: "Customers", icon: UsersIcon, roles: ["admin", "staff"] },
       { to: "/maintenance", label: "Maintenance", icon: Wrench, roles: ["admin", "staff", "operator"] },
       { to: "/reports", label: "Reports", icon: BarChart3, roles: ["admin", "staff"] },
       { to: "/requests", label: "Requests", icon: ClipboardList, roles: ["admin", "staff", "customer"] },
       { to: "/my-rentals", label: "My Rentals", icon: UserSquare2, roles: ["customer"] },
-      { to: "/users", label: "Users", icon: Users, roles: ["admin"] }
+      { to: "/users", label: "Users", icon: UsersIcon, roles: ["admin"] }
     ];
     return all.filter((x) => x.roles.includes(role));
   }, [role]);
@@ -180,13 +180,23 @@ function AppShell() {
 
   useEffect(() => {
     if (!loggedIn) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadMe()
+    let active = true;
+    api
+      .get("/auth/me")
+      .then((res) => {
+        if (active) setUser(res.data);
+      })
       .catch(() => {
         setToken(null);
-        setUser(null);
+        if (active) setUser(null);
       })
-      .finally(() => setBooting(false));
+      .finally(() => {
+        if (active) setBooting(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [loggedIn]);
 
   function logout() {
@@ -279,7 +289,7 @@ function AppShell() {
         <Route path="/requests" element={<ProtectedRoute user={user} allow={["admin", "staff", "customer"]} element={<Requests user={user} />} />} />
         <Route path="/my-rentals" element={<ProtectedRoute user={user} allow={["customer"]} element={<MyRentals />} />} />
         <Route path="/reports" element={<ProtectedRoute user={user} allow={["admin", "staff"]} element={<Reports user={user} />} />} />
-        <Route path="/users" element={<ProtectedRoute user={user} allow={["admin"]} element={<UsersPage user={user} />} />} />
+        <Route path="/users" element={<ProtectedRoute user={user} allow={["admin"]} element={<Users user={user} />} />} />
 
         <Route path="*" element={<Dashboard user={user} />} />
       </Routes>

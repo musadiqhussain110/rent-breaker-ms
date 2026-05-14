@@ -9,5 +9,9 @@ const statusClasses = {
 
 export function StatusBadge({ status }) {
   const s = String(status || "unknown").toLowerCase();
-  return <Badge variant="outline" className={statusClasses[s] || "bg-muted text-muted-foreground border-border"}>{s}</Badge>;
+  return (
+    <Badge variant="outline" className={statusClasses[s] || "bg-muted text-muted-foreground border-border"}>
+      {s}
+    </Badge>
+  );
 }
